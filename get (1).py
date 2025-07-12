@@ -4,7 +4,7 @@ import numpy as np
 from openai import OpenAI
 
 # ------------ 🔐 Insert Your Real OpenAI API Key Below ---------------
-api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # Replace with your key
+api_key = "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"  # Replace with your key
 client = OpenAI(api_key=api_key)
 
 # ------------ Build AI Portrait Prompt Based on Habits ---------------
