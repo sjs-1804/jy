@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import openai
-import os
+from openai import OpenAI
 
-# ------------ API Key (Secure Setup) ---------------
-openai.api_key = st.secrets.get("OPENAI_API_KEY", "your-api-key-here")
+# ------------ API Setup ---------------
+api_key = st.secrets.get("OPENAI_API_KEY", "your-api-key-here")
+client = OpenAI(api_key=api_key)
 
 # ------------ Prompt Builder for AI Portrait ---------------
 def build_ai_portrait_prompt(habits):
@@ -43,22 +43,24 @@ def build_ai_portrait_prompt(habits):
     prompt += "realistic digital portrait, professional lighting."
     return prompt.strip()
 
-# ------------ Generate AI Image with OpenAI DALL·E ---------------
+# ------------ Generate AI Image (DALL·E 3) ---------------
 def generate_ai_image(prompt):
     try:
-        response = openai.Image.create(
+        response = client.images.generate(
+            model="dall-e-3",
             prompt=prompt,
-            n=1,
-            size="512x512"
+            size="512x512",
+            quality="standard",
+            n=1
         )
-        return response['data'][0]['url']
+        return response.data[0].url
     except Exception as e:
         st.error(f"Image generation failed: {e}")
         return None
 
-# ------------ Collect Lifestyle Habits from User ---------------
+# ------------ Collect Lifestyle Habits ---------------
 def get_user_habits():
-    st.write("### ✍️ Enter Your Current Lifestyle Habits")
+    st.write("### ✍️ Enter Your Lifestyle Habits")
 
     name = st.text_input("Your name (optional)", value="You")
     age = st.slider("Age", 10, 80, 30)
@@ -86,7 +88,7 @@ def get_user_habits():
         "water_glasses": water_glasses
     }
 
-# ------------ Future Simulation ---------------
+# ------------ Simulate Future Health ---------------
 def simulate_future(habits, years):
     base_weight = 70
     base_energy = 70
@@ -132,14 +134,14 @@ def simulate_future(habits, years):
 # ------------ Streamlit App Layout ---------------
 st.set_page_config(page_title="Future Me Score", layout="wide")
 st.title("🧬 Future Me Score")
-st.subheader("Simulate your future health and see your AI-generated future self")
+st.subheader("Simulate your future health and generate your AI-powered future self portrait")
 
 tab1, tab2, tab3 = st.tabs(["🏠 Home", "📊 Simulation", "🤖 AI Portrait"])
 
 # ------------ Home Tab ---------------
 with tab1:
     st.image("https://images.unsplash.com/photo-1613892202132-d8175c67b11d", use_column_width=True)
-    st.markdown("This app lets you simulate future **weight**, **energy**, and **focus** — and generate your **AI Future Self** based on your lifestyle.")
+    st.markdown("This app uses your lifestyle to simulate future **weight**, **energy**, and **focus** — and generates your **AI Future Self**.")
 
 # ------------ Simulation Tab ---------------
 with tab2:
@@ -160,4 +162,4 @@ with tab3:
         if image_url:
             st.image(image_url, caption="AI-Generated Future You", width=512)
         else:
-            st.error("❌ Failed to generate image. Check your OpenAI API key.")
+            st.warning("Image generation failed. Check your API key or try again later.")
