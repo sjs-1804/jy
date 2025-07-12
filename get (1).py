@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,13 +10,13 @@ def get_user_habits():
     age = st.slider("Your age", 10, 80, 30)
     height = st.slider("Your height (cm)", 140, 200, 170)
     gender = st.radio("Gender", ["Male", "Female"])
-    sleep_hours = st.slider("How many hours do you sleep per day?", 0.0, 12.0, 6.0)
-    food_quality = st.selectbox("How would you rate your food quality? (1 = Poor, 5 = Excellent)", [1, 2, 3, 4, 5])
-    screen_time = st.slider("Average screen time (hours)", 0.0, 16.0, 6.0)
-    stress_level = st.selectbox("Your current stress level (1 = Low, 5 = High)", [1, 2, 3, 4, 5])
-    activity_minutes = st.slider("Minutes of physical activity per day", 0, 120, 30)
-    caffeine_intake = st.slider("Cups of caffeine per day", 0, 10, 2)
-    water_glasses = st.slider("Glasses of water per day", 0, 12, 6)
+    sleep_hours = st.slider("How many hours do you sleep per day?", 0.0, 12.0, 8.0)
+    food_quality = st.selectbox("How would you rate your food quality? (1 = Poor, 5 = Excellent)", [1, 2, 3, 4, 5], index=4)
+    screen_time = st.slider("Average screen time (hours)", 0.0, 16.0, 2.0)
+    stress_level = st.selectbox("Your current stress level (1 = Low, 5 = High)", [1, 2, 3, 4, 5], index=0)
+    activity_minutes = st.slider("Minutes of physical activity per day", 0, 120, 60)
+    caffeine_intake = st.slider("Cups of caffeine per day", 0, 10, 0)
+    water_glasses = st.slider("Glasses of water per day", 0, 12, 12)
 
     return {
         "age": age,
@@ -87,28 +86,28 @@ def generate_suggestions(habits):
 
     if habits["sleep_hours"] < 6:
         suggestions.append("🛌 You should sleep 6–8 hours per day. Your sleep time is very low.")
-        images.append("images/low_sleep.jpg")
+        images.append("https://cdn.pixabay.com/photo/2020/02/05/19/13/sleep-4825687_1280.jpg")
 
     if habits["food_quality"] <= 2:
         suggestions.append("🥦 Improve your food quality by eating more fruits and vegetables.")
 
     if habits["screen_time"] > 6:
         suggestions.append("📱 Your screen time is high. Reduce it to less than 6 hours per day.")
-        images.append("images/high_screen_time.jpg")
+        images.append("https://cdn.pixabay.com/photo/2017/08/07/23/57/smartphone-2604479_1280.jpg")
 
     if habits["stress_level"] >= 4:
         suggestions.append("😟 Your stress level is high. Try relaxation techniques like meditation.")
 
     if habits["activity_minutes"] < 30:
         suggestions.append("🏃‍♂️ Increase physical activity to at least 30 minutes per day.")
-        images.append("images/low_activity.jpg")
+        images.append("https://cdn.pixabay.com/photo/2016/03/27/22/22/running-1280256_1280.jpg")
 
     if habits["caffeine_intake"] > 2:
         suggestions.append("☕ Reduce caffeine to 1–2 cups a day.")
 
     if habits["water_glasses"] < 6:
         suggestions.append("💧 Your water intake is low. Aim for 6–8 glasses daily.")
-        images.append("images/low_water.jpg")
+        images.append("https://cdn.pixabay.com/photo/2016/04/20/18/41/water-1343141_1280.jpg")
 
     if not suggestions:
         suggestions.append("✅ Your habits look balanced. Keep it up!")
@@ -146,13 +145,10 @@ with tab2:
     st.dataframe(df)
 
     st.write("### 📌 Personalized Suggestions")
-    suggestions, img_paths = generate_suggestions(habits)
+    suggestions, img_urls = generate_suggestions(habits)
     for s in suggestions:
         st.markdown(f"- {s}")
 
     st.write("### 🎨 Visual Insights")
-    for img_path in img_paths:
-        try:
-            st.image(Image.open(img_path), width=300)
-        except:
-            st.warning(f"Image not found: {img_path}")
+    for url in img_urls:
+        st.image(url, width=300)
