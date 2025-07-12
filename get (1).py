@@ -1,164 +1,148 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from PIL import Image
 from openai import OpenAI
 
-# ------------ 🔐 Insert Your Real OpenAI API Key Below ---------------
-api_key = "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"  # Replace with your key
-client = OpenAI(api_key=api_key)
+# ✅ Use a user API key only (not a project-scoped one)
+client = OpenAI(api_key="sk-your-user-secret-key-here")  # Replace with your real key
 
-# ------------ Build AI Portrait Prompt Based on Habits ---------------
-def build_ai_portrait_prompt(habits):
-    prompt = f"Portrait of a {habits['age']}-year-old {habits['gender'].lower()}, "
-
-    if habits["sleep_hours"] < 6:
-        prompt += "tired eyes, dark circles, "
-    else:
-        prompt += "well-rested and refreshed, "
-
-    if habits["food_quality"] >= 4:
-        prompt += "healthy glowing skin, "
-    else:
-        prompt += "dull and unhealthy skin, "
-
-    if habits["stress_level"] >= 4:
-        prompt += "stressed facial expression, "
-    elif habits["stress_level"] <= 2:
-        prompt += "calm and relaxed appearance, "
-
-    if habits["screen_time"] > 6:
-        prompt += "slightly strained eyes, "
-
-    if habits["activity_minutes"] >= 45:
-        prompt += "fit and active look, defined face, "
-    else:
-        prompt += "low-energy posture, "
-
-    if habits["water_glasses"] < 6:
-        prompt += "dry skin, "
-
-    if habits["caffeine_intake"] > 3:
-        prompt += "restless or anxious expression, "
-
-    prompt += "realistic digital portrait, professional lighting."
-    return prompt.strip()
-
-# ------------ Generate AI Image Using DALL·E 3 ---------------
-def generate_ai_image(prompt):
-    try:
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="512x512",
-            quality="standard",
-            n=1
-        )
-        return response.data[0].url
-    except Exception as e:
-        st.error(f"Image generation failed: {e}")
-        return None
-
-# ------------ Get Lifestyle Habits from User ---------------
+# -------------------- USER INPUT --------------------
 def get_user_habits():
-    st.write("### ✍️ Enter Your Lifestyle Habits")
-
-    name = st.text_input("Your name (optional)", value="You")
-    age = st.slider("Age", 10, 80, 30)
-    height = st.slider("Height (cm)", 140, 200, 170)
-    gender = st.radio("Gender", ["Male", "Female"])
-    sleep_hours = st.slider("Sleep hours per day", 0.0, 12.0, 8.0)
-    food_quality = st.selectbox("Food quality (1 = Poor, 5 = Excellent)", [1, 2, 3, 4, 5], index=4)
-    screen_time = st.slider("Screen time (hrs/day)", 0.0, 16.0, 2.0)
-    stress_level = st.selectbox("Stress level (1 = Low, 5 = High)", [1, 2, 3, 4, 5], index=1)
-    activity_minutes = st.slider("Physical activity (min/day)", 0, 120, 60)
-    caffeine_intake = st.slider("Cups of caffeine/day", 0, 10, 0)
-    water_glasses = st.slider("Water intake (glasses/day)", 0, 12, 8)
-
     return {
-        "name": name,
-        "age": age,
-        "height": height,
-        "gender": gender,
-        "sleep_hours": sleep_hours,
-        "food_quality": food_quality,
-        "screen_time": screen_time,
-        "stress_level": stress_level,
-        "activity_minutes": activity_minutes,
-        "caffeine_intake": caffeine_intake,
-        "water_glasses": water_glasses
+        "gender": "female",
+        "age": 27,
+        "sleep_hours": 5,
+        "food_quality": 2,
+        "screen_time": 9.0,
+        "stress_level": 4,
+        "activity_minutes": 20,
+        "caffeine_intake": 3,
+        "water_glasses": 3
     }
 
-# ------------ Simulate Future Health Based on Habits ---------------
+# -------------------- SIMULATION --------------------
 def simulate_future(habits, years):
     base_weight = 70
     base_energy = 70
     base_focus = 70
 
-    weight = base_weight
-    if habits["gender"] == "Male":
-        bmr = 10 * weight + 6.25 * habits["height"] - 5 * habits["age"] + 5
-    else:
-        bmr = 10 * weight + 6.25 * habits["height"] - 5 * habits["age"] - 161
-
-    calorie_surplus = (
-        (5 - habits["food_quality"]) * 100 +
-        (habits["screen_time"] - 6) * 50 -
-        (habits["activity_minutes"] - 30) * 5
+    weight_change = (
+        -0.4 * (habits["activity_minutes"] / 30) +
+        0.7 * (habits["screen_time"] / 5) +
+        1.0 * (5 - habits["food_quality"])
     )
-    weight_change = (calorie_surplus * 365 * years) / 7700
-    weight_future = np.clip(weight + weight_change, 45, 120)
 
     energy_change = (
-        1.5 * (habits["sleep_hours"] - 7) -
-        1.5 * (habits["stress_level"] - 3) -
-        0.5 * (2 if habits["water_glasses"] < 6 else 0)
+        1.2 * (habits["sleep_hours"] - 7) +
+        -1.1 * (habits["stress_level"] - 3) +
+        -0.4 * habits["caffeine_intake"]
     )
-    energy_future = np.clip(base_energy + energy_change * years, 0, 100)
 
     focus_change = (
-        -1.0 * (habits["screen_time"] - 6) +
-        0.8 * (habits["sleep_hours"] - 7) -
-        1.0 * (habits["stress_level"] - 3)
+        -0.8 * (habits["screen_time"] - 6) +
+        0.5 * (habits["sleep_hours"] - 6) +
+        -0.7 * (habits["stress_level"] - 3)
     )
+
+    weight_future = np.clip(base_weight + weight_change * years, 45, 120)
+    energy_future = np.clip(base_energy + energy_change * years, 0, 100)
     focus_future = np.clip(base_focus + focus_change * years, 0, 100)
 
     return {
-        "name": habits["name"],
         "years": years,
         "predicted_weight": round(weight_future, 1),
         "predicted_energy": round(energy_future, 1),
         "predicted_focus": round(focus_future, 1)
     }
 
-# ------------ Streamlit App UI ---------------
+# -------------------- AI IMAGE --------------------
+def generate_ai_image(habits):
+    prompt = f"A portrait of a {habits['gender']} in her {habits['age']}s living a lifestyle with "
+    prompt += f"{habits['sleep_hours']} hrs sleep, high stress, poor diet, "
+    prompt += f"{habits['screen_time']} hrs screen time, low activity, low water intake."
+
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        n=1,
+        size="512x512"
+    )
+    return response.data[0].url
+
+# -------------------- SUGGESTIONS --------------------
+def generate_suggestions(habits):
+    suggestions = []
+    images = []
+
+    if habits["sleep_hours"] < 6:
+        suggestions.append("🛌 You should sleep 6–8 hours per day.")
+        images.append("images/low_sleep.jpg")
+
+    if habits["food_quality"] <= 2:
+        suggestions.append("🥦 Eat more whole foods, fruits, and vegetables.")
+
+    if habits["screen_time"] > 6:
+        suggestions.append("📱 Try to limit screen time below 6 hours.")
+
+    if habits["stress_level"] >= 4:
+        suggestions.append("😟 Practice meditation or deep breathing daily.")
+
+    if habits["activity_minutes"] < 30:
+        suggestions.append("🏃‍♀️ Exercise at least 30 minutes per day.")
+        images.append("images/low_activity.jpg")
+
+    if habits["caffeine_intake"] > 2:
+        suggestions.append("☕ Try limiting caffeine to 1–2 cups/day.")
+
+    if habits["water_glasses"] < 6:
+        suggestions.append("💧 Hydrate better – aim for 6–8 glasses of water.")
+
+    if not suggestions:
+        suggestions.append("✅ Great job! Your habits are healthy.")
+
+    return suggestions, images
+
+# -------------------- STREAMLIT APP --------------------
 st.set_page_config(page_title="Future Me Score", layout="wide")
-st.title("🧬 Future Me Score")
-st.subheader("Simulate your future health and generate your AI-powered future self portrait")
+
+st.title("🧬 Future Me Score Simulator")
+st.subheader("Visualize your future based on your current lifestyle.")
 
 tab1, tab2, tab3 = st.tabs(["🏠 Home", "📊 Simulation", "🤖 AI Portrait"])
 
-# ------------ Home Tab ---------------
 with tab1:
     st.image("https://images.unsplash.com/photo-1613892202132-d8175c67b11d", use_column_width=True)
-    st.markdown("This app simulates your future **weight**, **energy**, and **focus** based on your habits, and generates your **AI Future Self**.")
+    st.markdown("""
+    Welcome to the **Future Me Score** app.
 
-# ------------ Simulation Tab ---------------
+    Enter your lifestyle habits and we’ll simulate your health over 3, 5, and 10 years,
+    along with tips to improve and an AI-generated **future portrait**.
+    """)
+
 with tab2:
     habits = get_user_habits()
     results = [simulate_future(habits, y) for y in [3, 5, 10]]
-    df = pd.DataFrame(results)
-    st.write("### 📈 Future Health Predictions")
-    st.dataframe(df)
+    st.write("### 📈 Health Projection")
+    st.dataframe(pd.DataFrame(results))
 
-# ------------ AI Portrait Tab ---------------
+    st.write("### 📌 Personalized Suggestions")
+    suggestions, img_paths = generate_suggestions(habits)
+    for s in suggestions:
+        st.markdown(f"- {s}")
+    st.write("### 🎨 Visual Insights")
+    for img_path in img_paths:
+        try:
+            st.image(Image.open(img_path), width=300)
+        except:
+            st.warning(f"⚠️ Image not found: {img_path}")
+
 with tab3:
-    st.write("### 🧠 Your AI-Generated 'Future You' Image")
-    prompt = build_ai_portrait_prompt(habits)
-    st.text_area("Prompt used:", value=prompt, height=120)
-
+    st.write("### 👁️ AI-Generated Future You")
     if st.button("🎨 Generate Image"):
-        image_url = generate_ai_image(prompt)
-        if image_url:
-            st.image(image_url, caption="AI-Generated Future You", width=512)
-        else:
-            st.warning("Image generation failed. Check your API key or try again later.")
+        with st.spinner("Creating your future portrait..."):
+            try:
+                image_url = generate_ai_image(habits)
+                st.image(image_url, caption="Your Future Self", use_column_width=True)
+            except Exception as e:
+                st.error(f"Image generation failed: {e}")
