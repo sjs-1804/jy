@@ -9,7 +9,7 @@ from PIL import Image
 LEADERBOARD_FILE = "leaderboard.csv"
 HABIT_TRACKER_FILE = "habit_data.csv"
 
-# ---------------- TIPS / QUOTES ------------------
+# ---------------- DAILY TIPS ----------------
 tips = [
     "💡 Small habits create big results.",
     "🏃 A 30-minute walk can boost your mood instantly.",
@@ -20,7 +20,7 @@ tips = [
     "📴 Less screen time, more life time."
 ]
 
-# ---------------- SIMULATION ENGINE ----------------
+# ---------------- SIMULATOR ----------------
 def simulate_future(habits, years):
     base_weight = 70
     base_energy = 70
@@ -90,8 +90,9 @@ def load_csv(file_path, columns):
 
 def save_score(name, score):
     df = load_csv(LEADERBOARD_FILE, ["Name", "Score"])
-    new_row = pd.DataFrame([[name, score]], columns=["Name", "Score"])
-    df = pd.concat([df, new_row], ignore_index=True)
+    df = df[df["Name"] != name]  # remove old entry
+    updated = pd.DataFrame([[name, score]], columns=["Name", "Score"])
+    df = pd.concat([df, updated], ignore_index=True)
     df.to_csv(LEADERBOARD_FILE, index=False)
 
 def save_habit_entry(entry_dict):
@@ -203,4 +204,3 @@ with tab4:
         st.dataframe(df_leader)
     else:
         st.info("No scores yet.")
-
