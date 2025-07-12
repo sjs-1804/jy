@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 from openai import OpenAI
 
-# ------------ API Setup ---------------
-api_key = st.secrets.get("OPENAI_API_KEY", "your-api-key-here")
+# ------------ 🔐 Insert Your Real OpenAI API Key Below ---------------
+api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # Replace with your key
 client = OpenAI(api_key=api_key)
 
-# ------------ Prompt Builder for AI Portrait ---------------
+# ------------ Build AI Portrait Prompt Based on Habits ---------------
 def build_ai_portrait_prompt(habits):
     prompt = f"Portrait of a {habits['age']}-year-old {habits['gender'].lower()}, "
 
@@ -43,7 +43,7 @@ def build_ai_portrait_prompt(habits):
     prompt += "realistic digital portrait, professional lighting."
     return prompt.strip()
 
-# ------------ Generate AI Image (DALL·E 3) ---------------
+# ------------ Generate AI Image Using DALL·E 3 ---------------
 def generate_ai_image(prompt):
     try:
         response = client.images.generate(
@@ -58,7 +58,7 @@ def generate_ai_image(prompt):
         st.error(f"Image generation failed: {e}")
         return None
 
-# ------------ Collect Lifestyle Habits ---------------
+# ------------ Get Lifestyle Habits from User ---------------
 def get_user_habits():
     st.write("### ✍️ Enter Your Lifestyle Habits")
 
@@ -88,7 +88,7 @@ def get_user_habits():
         "water_glasses": water_glasses
     }
 
-# ------------ Simulate Future Health ---------------
+# ------------ Simulate Future Health Based on Habits ---------------
 def simulate_future(habits, years):
     base_weight = 70
     base_energy = 70
@@ -100,7 +100,6 @@ def simulate_future(habits, years):
     else:
         bmr = 10 * weight + 6.25 * habits["height"] - 5 * habits["age"] - 161
 
-    activity_factor = 1.2 + (habits["activity_minutes"] / 120)
     calorie_surplus = (
         (5 - habits["food_quality"]) * 100 +
         (habits["screen_time"] - 6) * 50 -
@@ -131,7 +130,7 @@ def simulate_future(habits, years):
         "predicted_focus": round(focus_future, 1)
     }
 
-# ------------ Streamlit App Layout ---------------
+# ------------ Streamlit App UI ---------------
 st.set_page_config(page_title="Future Me Score", layout="wide")
 st.title("🧬 Future Me Score")
 st.subheader("Simulate your future health and generate your AI-powered future self portrait")
@@ -141,7 +140,7 @@ tab1, tab2, tab3 = st.tabs(["🏠 Home", "📊 Simulation", "🤖 AI Portrait"])
 # ------------ Home Tab ---------------
 with tab1:
     st.image("https://images.unsplash.com/photo-1613892202132-d8175c67b11d", use_column_width=True)
-    st.markdown("This app uses your lifestyle to simulate future **weight**, **energy**, and **focus** — and generates your **AI Future Self**.")
+    st.markdown("This app simulates your future **weight**, **energy**, and **focus** based on your habits, and generates your **AI Future Self**.")
 
 # ------------ Simulation Tab ---------------
 with tab2:
